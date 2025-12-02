@@ -72,7 +72,7 @@ pipeline {
         stage('Update Deployment File') {
     steps {
         withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
-            dir("${WORKSPACE}") {  // workspace now contains .git
+            dir("${WORKSPACE}") {
                 sh '''
                     git config user.email "bhavananimmagadda@gmail.com"
                     git config user.name "bhavananimmagadda-arch"
@@ -82,7 +82,7 @@ pipeline {
                     git commit -m "Update deployment image to version ${BUILD_NUMBER}" || echo "No changes to commit"
                     git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git HEAD:main
                 '''
-            }
-        }
-    }
-}
+            } // closes dir()
+        } // closes withCredentials
+    } // closes steps
+} // closes stage
