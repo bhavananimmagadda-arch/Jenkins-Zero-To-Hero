@@ -1,8 +1,9 @@
+{"id":"62572","variant":"standard","title":"Customized Jenkinsfile for Bhavana Nimmagadda"}
 pipeline {
     agent {
         docker {
             image 'maven:3.9.6-eclipse-temurin-17'
-            args '--user root -v /var/run/docker.sock:/var/run/docker.sock' // mount host Docker
+            args '--user root -v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
 
@@ -47,6 +48,15 @@ pipeline {
             }
         }
 
+        stage('Prepare Docker CLI') {
+            steps {
+                sh '''
+                    apt-get update && apt-get install -y docker.io
+                    docker --version
+                '''
+            }
+        }
+
         stage('Build and Push Docker Image') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
@@ -64,12 +74,9 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
                     sh '''
-                        cd ${WORKSPACE}  # make sure we're in the Git repo root
                         git config user.email "bhavananimmagadda@gmail.com"
                         git config user.name "bhavananimmagadda-arch"
-
                         sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
-
                         git add java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
                         git commit -m "Update deployment image to version ${BUILD_NUMBER}" || echo "No changes to commit"
                         git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
