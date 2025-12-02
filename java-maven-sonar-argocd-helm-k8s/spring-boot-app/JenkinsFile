@@ -67,24 +67,24 @@ stage('Update Deployment File') {
         GIT_REPO_NAME = "springboot-app"
         GIT_USER_NAME = "bhavananimmagadda-arch"
     }
+    stage('Update Deployment File') {
+    environment {
+        GIT_REPO_NAME = "springboot-app"
+        GIT_USER_NAME = "bhavananimmagadda-arch"
+    }
     steps {
-        // Checkout the repository using the Jenkins credential (PAT)
-        checkout([$class: 'GitSCM',
-            branches: [[name: '*/main']],
-            doGenerateSubmoduleConfigurations: false,
-            userRemoteConfigs: [[
-                url: "https://github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git",
-                credentialsId: 'github' // <-- Use the ID of your Jenkins PAT credential
-            ]]
-        ])
-
         withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
             sh '''
-                # Configure Git user for this commit
-                git config user.email "bhavananimmagadda@gmail.com"
-                git config user.name "bhavananimmagadda-arch"
+                # Configure Git user
+                git config --global user.email "bhavananimmagadda@gmail.com"
+                git config --global user.name "bhavananimmagadda-arch"
 
-                # Replace image tag in deployment file
+                # Clone repo using PAT inside the container
+                rm -rf ${GIT_REPO_NAME}  # clean previous folder if exists
+                git clone https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git
+                cd ${GIT_REPO_NAME}
+
+                # Update deployment file
                 BUILD_NUMBER=${BUILD_NUMBER}
                 sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
 
@@ -93,9 +93,8 @@ stage('Update Deployment File') {
                     git add java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
                     git commit -m "Update deployment image to version ${BUILD_NUMBER}"
 
-                    # Use the token for authentication in a secure way
-                    git remote set-url origin https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git
-                    git push origin HEAD:main
+                    # Push using the token
+                    git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git HEAD:main
                 else
                     echo "No changes to commit."
                 fi
@@ -103,5 +102,6 @@ stage('Update Deployment File') {
         }
     }
 }
+
  }
   }
