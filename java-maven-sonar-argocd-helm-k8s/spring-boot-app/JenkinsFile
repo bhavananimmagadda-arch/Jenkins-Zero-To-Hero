@@ -72,23 +72,14 @@ pipeline {
         stage('Update Deployment File') {
     steps {
         withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
-            dir("${WORKSPACE}") {  // make sure we are in the Jenkins workspace
+            dir("${WORKSPACE}") {  // workspace now contains .git
                 sh '''
-                    # Configure Git
                     git config user.email "bhavananimmagadda@gmail.com"
                     git config user.name "bhavananimmagadda-arch"
-
-                    # Ensure we are on main branch
                     git checkout main
-
-                    # Update deployment image tag
                     sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
-
-                    # Commit changes
                     git add java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
                     git commit -m "Update deployment image to version ${BUILD_NUMBER}" || echo "No changes to commit"
-
-                    # Push changes using GitHub token
                     git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git HEAD:main
                 '''
             }
