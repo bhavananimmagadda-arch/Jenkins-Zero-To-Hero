@@ -2,10 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: spring-boot-app
-  labels:
-    app: spring-boot-app
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: spring-boot-app
@@ -15,7 +13,9 @@ spec:
         app: spring-boot-app
     spec:
       containers:
-      - name: spring-boot-app
-        image: bhavananimmagadda/spring-boot-app:8
-        ports:
-        - containerPort: 8080
+        - name: spring-boot-app
+          image: bhavananimmagadda/spring-boot-app:8
+          ports:
+            - containerPort: 8080
+      imagePullSecrets:
+        - name: dockerhub-creds
