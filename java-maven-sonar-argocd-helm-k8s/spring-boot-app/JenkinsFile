@@ -74,12 +74,12 @@ stage('Update Deployment File') {
                 git config --global user.email "bhavananimmagadda@gmail.com"
                 git config --global user.name "bhavananimmagadda-arch"
 
-                # Remove any existing repo folder and clone using PAT
+                # Remove any existing folder and clone the main repo
                 rm -rf ${GIT_REPO_NAME}
                 git clone https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git
                 cd ${GIT_REPO_NAME}
 
-                # Update deployment file with the current build number
+                # Update deployment.yml inside the correct folder
                 BUILD_NUMBER=${BUILD_NUMBER}
                 sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
 
