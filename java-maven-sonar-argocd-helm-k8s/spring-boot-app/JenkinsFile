@@ -74,11 +74,11 @@ stage('Update Deployment File') {
             doGenerateSubmoduleConfigurations: false,
             userRemoteConfigs: [[
                 url: "https://github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git",
-                credentialsId: 'github-pat' // <-- Use the ID of your Jenkins PAT credential
+                credentialsId: 'github' // <-- Use the ID of your Jenkins PAT credential
             ]]
         ])
 
-        withCredentials([string(credentialsId: 'github-pat', variable: 'GITHUB_TOKEN')]) {
+        withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
             sh '''
                 # Configure Git user for this commit
                 git config user.email "bhavananimmagadda@gmail.com"
