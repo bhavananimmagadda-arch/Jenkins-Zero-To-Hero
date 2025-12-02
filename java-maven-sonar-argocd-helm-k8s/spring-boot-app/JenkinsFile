@@ -63,46 +63,23 @@ pipeline {
             }
         }
 stage('Update Deployment File') {
-    environment {
-        GIT_REPO_NAME = "springboot-app"
-        GIT_USER_NAME = "bhavananimmagadda-arch"
-    }
-    stage('Update Deployment File') {
-    environment {
-        GIT_REPO_NAME = "springboot-app"
-        GIT_USER_NAME = "bhavananimmagadda-arch"
-    }
-    steps {
-        withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
-            sh '''
-                # Configure Git user
-                git config --global user.email "bhavananimmagadda@gmail.com"
-                git config --global user.name "bhavananimmagadda-arch"
-
-                # Clone repo using PAT inside the container
-                rm -rf ${GIT_REPO_NAME}  # clean previous folder if exists
-                git clone https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git
-                cd ${GIT_REPO_NAME}
-
-                # Update deployment file
-                BUILD_NUMBER=${BUILD_NUMBER}
-                sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
-
-                # Commit changes if any
-                if ! git diff --quiet; then
+        environment {
+            GIT_REPO_NAME = "springboot-app"
+            GIT_USER_NAME = "bhavananimmagadda-arch"
+        }
+        steps {
+            withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
+                sh '''
+                    git config user.email "bhavananimmagadda@gmail.com"
+                    git config user.name "bhavananimmagadda-arch"
+                    BUILD_NUMBER=${BUILD_NUMBER}
+                    sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
                     git add java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
                     git commit -m "Update deployment image to version ${BUILD_NUMBER}"
-
-                    # Push using the token
-                    git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git HEAD:main
-                else
-                    echo "No changes to commit."
-                fi
-            '''
+                    git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
+                '''
+            }
         }
     }
-}
-
- }
   }
-   }
+}
