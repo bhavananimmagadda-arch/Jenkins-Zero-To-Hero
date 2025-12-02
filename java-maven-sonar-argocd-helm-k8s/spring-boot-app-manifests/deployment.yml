@@ -17,5 +17,19 @@ spec:
       containers:
       - name: spring-boot-app
         image: bhavananimmagadda/spring-boot-app:8
+        imagePullPolicy: Always   # Ensures Kubernetes always pulls the latest image
         ports:
         - containerPort: 8080
+        readinessProbe:           # Checks if app is ready to serve traffic
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        livenessProbe:            # Checks if app is alive
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 15
+      restartPolicy: Always
