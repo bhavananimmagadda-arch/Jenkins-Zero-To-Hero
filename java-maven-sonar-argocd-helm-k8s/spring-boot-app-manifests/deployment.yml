@@ -17,21 +17,5 @@ spec:
       containers:
       - name: spring-boot-app
         image: bhavananimmagadda/spring-boot-app:8
-        imagePullPolicy: Always
         ports:
         - containerPort: 8080
-        readinessProbe:
-          httpGet:
-            path: /actuator/health
-            port: 8080
-          initialDelaySeconds: 10
-          periodSeconds: 10
-        livenessProbe:
-          httpGet:
-            path: /actuator/health
-            port: 8080
-          initialDelaySeconds: 30
-          periodSeconds: 15
-      imagePullSecrets:
-      - name: dockerhub-creds
-      restartPolicy: Always
