@@ -12,10 +12,11 @@ spec:
       labels:
         app: spring-boot-app
     spec:
+      imagePullSecrets:
+        - name: dockerhub-creds
       containers:
         - name: spring-boot-app
           image: bhavananimmagadda/spring-boot-app:8
           ports:
             - containerPort: 8080
-      imagePullSecrets:
-        - name: dockerhub-creds
+
