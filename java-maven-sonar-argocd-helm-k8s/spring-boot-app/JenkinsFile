@@ -1,14 +1,15 @@
 pipeline {
     agent {
         docker {
-            image 'maven:3.9.6-eclipse-temurin-17' // Maven + Java
-            args '--user root -v /var/run/docker.sock:/var/run/docker.sock' // Access Docker from host
+            image 'maven:3.9.6-eclipse-temurin-17'
+            args '--user root -v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
 
     environment {
         SONAR_URL = "http://4.248.144.202:9000"
-        GIT_REPO_NAME = "springboot-app"
+        DOCKER_IMAGE = "bhavananimmagadda/spring-boot-app:${BUILD_NUMBER}"
+        GIT_REPO_NAME = "Jenkins-Zero-To-Hero"
         GIT_USER_NAME = "bhavananimmagadda-arch"
     }
 
@@ -16,15 +17,7 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                // Checkout using GitHub PAT for authentication
-                checkout([$class: 'GitSCM',
-                    branches: [[name: '*/main']],
-                    doGenerateSubmoduleConfigurations: false,
-                    userRemoteConfigs: [[
-                        url: "https://github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git",
-                        credentialsId: 'github-pat'
-                    ]]
-                ])
+                checkout scm
             }
         }
 
@@ -48,59 +41,67 @@ pipeline {
             }
         }
 
-        stage('Build and Push Docker Image') {
+        stage('Prepare Docker CLI') {
             steps {
-                script {
-                    def DOCKER_IMAGE = "bhavananimmagadda/spring-boot-app:${BUILD_NUMBER}"
-                    withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                        sh """
-                            cd java-maven-sonar-argocd-helm-k8s/spring-boot-app
-                            docker build -t ${DOCKER_IMAGE} .
-                            echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                            docker push ${DOCKER_IMAGE}
-                        """
-                    }
-                }
+                sh '''
+                    apt-get update && apt-get install -y docker.io
+                    docker --version
+                '''
             }
         }
 
-        stage('Update Deployment File') {
+        stage('Build and Push Docker Image') {
             steps {
-                // Checkout again using PAT (in case workspace changed)
-                checkout([$class: 'GitSCM',
-                    branches: [[name: '*/main']],
-                    doGenerateSubmoduleConfigurations: false,
-                    userRemoteConfigs: [[
-                        url: "https://github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git",
-                        credentialsId: 'github-pat'
-                    ]]
-                ])
-
-                withCredentials([string(credentialsId: 'github-pat', variable: 'GITHUB_TOKEN')]) {
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh '''
-                        # Configure Git user
-                        git config user.email "bhavananimmagadda@gmail.com"
-                        git config user.name "bhavananimmagadda-arch"
-
-                        # Update deployment.yml with the new image tag
-                        BUILD_NUMBER=${BUILD_NUMBER}
-                        sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
-
-                        # Commit changes only if file updated
-                        if ! git diff --quiet; then
-                            git add java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
-                            git commit -m "Update deployment image to version ${BUILD_NUMBER}"
-
-                            # Push using token securely
-                            git remote set-url origin https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git
-                            git push origin HEAD:main
-                        else
-                            echo "No changes to commit."
-                        fi
+                        cd java-maven-sonar-argocd-helm-k8s/spring-boot-app
+                        docker build -t ${DOCKER_IMAGE} .
+                        echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                        docker push ${DOCKER_IMAGE}
                     '''
                 }
             }
         }
+stage('Update Deployment File') {
+    environment {
+        GIT_REPO_NAME = "springboot-app"
+        GIT_USER_NAME = "bhavananimmagadda-arch"
+    }
+    steps {
+        // Checkout the repository using the Jenkins credential (PAT)
+        checkout([$class: 'GitSCM',
+            branches: [[name: '*/main']],
+            doGenerateSubmoduleConfigurations: false,
+            userRemoteConfigs: [[
+                url: "https://github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git",
+                credentialsId: 'github-pat' // <-- Use the ID of your Jenkins PAT credential
+            ]]
+        ])
 
+        withCredentials([string(credentialsId: 'github-pat', variable: 'GITHUB_TOKEN')]) {
+            sh '''
+                # Configure Git user for this commit
+                git config user.email "bhavananimmagadda@gmail.com"
+                git config user.name "bhavananimmagadda-arch"
+
+                # Replace image tag in deployment file
+                BUILD_NUMBER=${BUILD_NUMBER}
+                sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
+
+                # Commit changes if any
+                if ! git diff --quiet; then
+                    git add java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
+                    git commit -m "Update deployment image to version ${BUILD_NUMBER}"
+
+                    # Use the token for authentication in a secure way
+                    git remote set-url origin https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git
+                    git push origin HEAD:main
+                else
+                    echo "No changes to commit."
+                fi
+            '''
+        }
     }
 }
+ }
+  }
