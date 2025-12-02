@@ -49,7 +49,7 @@ pipeline {
 
     stage('Build and Push Docker Image') {
       environment {
-        DOCKER_IMAGE = "bhavananimmagadda-arch/ultimate-cicd:${BUILD_NUMBER}"
+        DOCKER_IMAGE = "bhavananimmagadda/spring-boot-app:${BUILD_NUMBER}"
       }
       steps {
         script {
