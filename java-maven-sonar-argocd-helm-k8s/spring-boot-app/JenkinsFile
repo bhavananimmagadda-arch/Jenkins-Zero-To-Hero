@@ -1,4 +1,3 @@
-{"id":"62572","variant":"standard","title":"Customized Jenkinsfile for Bhavana Nimmagadda"}
 pipeline {
     agent {
         docker {
