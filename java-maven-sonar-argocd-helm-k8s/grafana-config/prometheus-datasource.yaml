@@ -1,0 +1,15 @@
+# This file tells Grafana how to connect to Prometheus.
+# It should be mounted into the Grafana container's provisioning directory.
+apiVersion: 1
+datasources:
+  - name: Prometheus
+    type: prometheus
+    # The URL should be the Kubernetes Service name for your Prometheus instance.
+    # Replace 'prometheus-service-name' with the actual name of your Prometheus Service.
+    url: http://prometheus-service-name:9090
+    access: proxy
+    isDefault: true
+    version: 1
+    # Note: If your Prometheus is part of a Helm chart like kube-prometheus-stack, 
+    # the service name might look like 'prometheus-kube-prometheus-stack-prometheus'. 
+    # Check your environment!
