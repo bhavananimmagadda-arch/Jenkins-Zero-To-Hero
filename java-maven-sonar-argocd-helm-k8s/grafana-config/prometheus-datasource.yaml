@@ -6,7 +6,7 @@ datasources:
     type: prometheus
     # The URL should be the Kubernetes Service name for your Prometheus instance.
     # Replace 'prometheus-service-name' with the actual name of your Prometheus Service.
-    url: http://prometheus-service-name:9090
+    url: http://prometheus-stack-kube-prom-prometheus.monitoring.svc.cluster.local:9090
     access: proxy
     isDefault: true
     version: 1
