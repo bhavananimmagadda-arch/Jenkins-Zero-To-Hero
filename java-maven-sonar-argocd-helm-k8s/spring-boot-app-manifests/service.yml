@@ -1,18 +1,18 @@
-iapiVersion: v1
+apiVersion: v1
 kind: Service
 metadata:
   name: spring-boot-app-service
-  annotations:
-    service.beta.kubernetes.io/azure-load-balancer-resource-group: mc_jenkins-rg_aks-cluster_canadacentral
-    service.beta.kubernetes.io/azure-load-balancer-public-ip: kubernetes-a74b1e25e4a0d44e79afbc89b7a65cea
+  namespace: springboot-app
+  labels:
+    app: spring-boot-app
 spec:
   type: LoadBalancer
   selector:
     app: spring-boot-app
   ports:
-    - port: 80
+    - name: http
+      port: 80
       targetPort: 8080
-      protocol: TCP
-      name: http
+
 
 
