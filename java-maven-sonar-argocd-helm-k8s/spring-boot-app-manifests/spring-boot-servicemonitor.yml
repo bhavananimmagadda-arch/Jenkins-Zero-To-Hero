@@ -1,0 +1,24 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: spring-boot-app-monitor
+  # The namespace where your Spring Boot app and Service are running
+  namespace: default 
+  # CRITICAL: This label MUST match the selector used by the Prometheus instance 
+  # installed by the 'kube-prometheus-stack' Helm chart.
+  labels:
+    release: prometheus-stack 
+spec:
+  # Selects the namespace where the Service is located (default)
+  namespaceSelector:
+    matchNames:
+      - default
+  # Selector matches the labels on your Service (assuming 'app: spring-boot-app')
+  selector:
+    matchLabels:
+      app: spring-boot-app 
+  endpoints:
+    # 'http' refers to the port name in your existing Service YAML
+    - port: http 
+      path: /actuator/prometheus
+      interval: 15s
